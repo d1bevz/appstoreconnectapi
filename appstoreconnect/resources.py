@@ -218,6 +218,9 @@ class SalesReport(Resource):
 	endpoint = '/v1/salesReports'
 	filters = 'https://developer.apple.com/documentation/appstoreconnectapi/download_sales_and_trends_reports'
 
+class CustomerReviewsReport(Resource):
+	endpoint = 'v1/appStoreVersions/{id}/customerReviews'
+	filters = 'https://developer.apple.com/documentation/appstoreconnectapi/list_all_customer_reviews_for_an_app_store_version'
 
 # create an index of Resources by type
 resources = {}
