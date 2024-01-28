@@ -10,6 +10,7 @@ import time
 import json
 from typing import List
 from enum import Enum, auto
+import csv
 
 from .resources import *
 from .__version__ import __version__ as version
@@ -702,3 +703,44 @@ class Api:
 			file.write_text(response, 'utf-8')
 
 		return response
+
+	def download_reviews(self, app_id, filters=None, save_to=None):
+
+		url = "%s%s" % (BASE_API, CustomerReviewsReport.endpoint)
+		url = url.format(id=app_id)
+		url = self._build_query_parameters(url, filters)
+		response = self._api_call(url)
+		reviews = response.get('data', [])
+
+		# fetch all pages
+		next_url = response.get('links', {}).get('next', None)
+		while next_url:
+			response = self._api_call(next_url)
+			reviews.extend(response.get('data', []))
+			next_url = response.get('links', {}).get('next', None)
+		if save_to:
+			file_path = Path(save_to)
+			# Open the CSV file for writing
+			with file_path.open(mode='w', newline='', encoding='utf-8') as file:
+				# Create a CSV writer object
+				writer = csv.writer(file)
+
+				# Write the header row
+				headers = ['type', 'id', 'rating', 'title', 'body', 'reviewer_nickname', 'created_date', 'territory']
+				writer.writerow(headers)
+
+				# Write data rows
+				for item in reviews:
+					row = [
+						item.get('type', ''),
+						item.get('id', ''),
+						item['attributes'].get('rating', ''),
+						item['attributes'].get('title', ''),
+						item['attributes'].get('body', ''),
+						item['attributes'].get('reviewerNickname', ''),
+						item['attributes'].get('createdDate', ''),
+						item['attributes'].get('territory', '')
+					]
+					writer.writerow(row)
+
+		return reviews
